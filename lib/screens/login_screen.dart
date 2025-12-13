@@ -40,9 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
         throw const AuthException('Unable to sign in. Please try again.');
       }
 
-      final metadataRole = (user.userMetadata?['role'] as String?)
-          ?.toLowerCase();
-      if (metadataRole == null || metadataRole.isEmpty) {
+      final role = await _fetchUserRole(user.id);
+      if (role == null || role.isEmpty) {
         await Supabase.instance.client.auth.signOut();
         throw const AuthException(
           'No role found for this account. Contact admin.',
@@ -54,24 +53,46 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
       ).showSnackBar(const SnackBar(content: Text('Login successful!')));
 
-      // TODO: Navigate to the appropriate dashboard after login
+      // TODO: Navigate to the appropriate dashboard after login using `role`
+    } on PostgrestException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.message ?? 'Database error while fetching role. Check RLS.',
+          ),
+        ),
+      );
     } on AuthException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Unexpected error occurred. Please try again.'),
         ),
       );
+      // Optional: log the error for debugging
+      // debugPrint('Login error: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<String?> _fetchUserRole(String userId) async {
+    final response = await Supabase.instance.client
+        .from('users')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (response == null) return null;
+    return (response['role'] as String?)?.toLowerCase();
   }
 
   @override
