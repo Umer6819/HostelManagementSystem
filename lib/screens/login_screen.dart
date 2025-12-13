@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'student_screen.dart';
+import 'warden_screen.dart';
+import 'admin_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -49,11 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Login successful!')));
-
-      // TODO: Navigate to the appropriate dashboard after login using `role`
+      _navigateByRole(role);
     } on PostgrestException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,6 +93,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (response == null) return null;
     return (response['role'] as String?)?.toLowerCase();
+  }
+
+  void _navigateByRole(String role) {
+    final normalized = role.trim();
+
+    Widget? destination;
+    if (normalized == 'student') {
+      destination = const StudentScreen();
+    } else if (normalized == 'warden') {
+      destination = const WardenScreen();
+    } else if (normalized == 'admin') {
+      destination = const AdminScreen();
+    }
+
+    if (destination == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Unknown role: $normalized')));
+      return;
+    }
+
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => destination!));
   }
 
   @override
