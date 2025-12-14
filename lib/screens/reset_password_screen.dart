@@ -1,124 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'student_screen.dart';
-import 'warden_screen.dart';
-import 'admin_screen.dart';
-
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ResetPasswordScreen extends StatefulWidget {
+  const ResetPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handlePasswordReset() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
 
     try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
-        email: email,
-        password: password,
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(password: _passwordController.text),
       );
 
-      final user = response.user;
-      if (user == null) {
-        throw const AuthException('Unable to sign in. Please try again.');
-      }
-
-      final role = await _fetchUserRole(user.id);
-      if (role == null || role.isEmpty) {
-        await Supabase.instance.client.auth.signOut();
-        throw const AuthException(
-          'No role found for this account. Contact admin.',
-        );
-      }
-
-      if (!mounted) return;
-      _navigateByRole(role);
-    } on PostgrestException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.message.isNotEmpty
-                ? e.message
-                : 'Database error while fetching role. Check RLS.',
-          ),
-        ),
-      );
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unexpected error occurred. Please try again.'),
-        ),
-      );
-      // Optional: log the error for debugging
-      // debugPrint('Login error: $e');
-    } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password updated successfully!')),
+        );
+        Navigator.of(context).pushReplacementNamed('/login');
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  Future<String?> _fetchUserRole(String userId) async {
-    final response = await Supabase.instance.client
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .maybeSingle();
-
-    if (response == null) return null;
-    return (response['role'] as String?)?.toLowerCase();
-  }
-
-  void _navigateByRole(String role) {
-    final normalized = role.trim();
-
-    Widget? destination;
-    if (normalized == 'student') {
-      destination = const StudentScreen();
-    } else if (normalized == 'warden') {
-      destination = const WardenScreen();
-    } else if (normalized == 'admin') {
-      destination = const AdminScreen();
-    }
-
-    if (destination == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Unknown role: $normalized')));
-      return;
-    }
-
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => destination!));
   }
 
   @override
@@ -139,35 +68,27 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo/Title
                 const Padding(
                   padding: EdgeInsets.only(bottom: 32.0),
                   child: Column(
                     children: [
                       Icon(
-                        Icons.home_work_rounded,
+                        Icons.lock_reset_rounded,
                         size: 64,
                         color: Colors.white,
                       ),
                       SizedBox(height: 16),
                       Text(
-                        'Hostel Management',
+                        'Reset Password',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        'System',
-                        style: TextStyle(fontSize: 24, color: Colors.white70),
-                      ),
                     ],
                   ),
                 ),
-
-                // Form Card
                 Card(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -180,47 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Email Field
                           const Text(
-                            'Email',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _emailController,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              hintText: 'Enter your email',
-                              prefixIcon: const Icon(Icons.email_outlined),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              }
-                              if (!RegExp(
-                                r'^[^@]+@[^@]+\.[^@]+',
-                              ).hasMatch(value)) {
-                                return 'Please enter a valid email';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Password Field
-                          const Text(
-                            'Password',
+                            'New Password',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -232,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
-                              hintText: 'Enter your password',
+                              hintText: 'Enter new password',
                               prefixIcon: const Icon(Icons.lock_outlined),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -256,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter your password';
+                                return 'Please enter a password';
                               }
                               if (value.length < 6) {
                                 return 'Password must be at least 6 characters';
@@ -264,26 +146,56 @@ class _LoginScreenState extends State<LoginScreen> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 8),
-
-                          // Forgot Password Link
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {
-                                // TODO: Implement forgot password
-                              },
-                              child: const Text(
-                                'Forgot Password?',
-                                style: TextStyle(color: Colors.blue),
-                              ),
+                          const SizedBox(height: 20),
+                          const Text(
+                            'Confirm Password',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey,
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPassword,
+                            decoration: InputDecoration(
+                              hintText: 'Confirm new password',
+                              prefixIcon: const Icon(Icons.lock_outlined),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                ),
+                                onPressed: () {
+                                  setState(
+                                    () => _obscureConfirmPassword =
+                                        !_obscureConfirmPassword,
+                                  );
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please confirm your password';
+                              }
+                              if (value != _passwordController.text) {
+                                return 'Passwords do not match';
+                              }
+                              return null;
+                            },
+                          ),
                           const SizedBox(height: 24),
-
-                          // Login Button
                           ElevatedButton(
-                            onPressed: _isLoading ? null : _handleLogin,
+                            onPressed: _isLoading ? null : _handlePasswordReset,
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               backgroundColor: Colors.blue.shade600,
@@ -303,37 +215,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   )
                                 : const Text(
-                                    'Login',
+                                    'Reset Password',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       color: Colors.white,
                                     ),
                                   ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Sign Up Link
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Text(
-                                "Don't have an account? ",
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  // TODO: Navigate to signup screen
-                                },
-                                child: const Text(
-                                  'Sign Up',
-                                  style: TextStyle(
-                                    color: Colors.blue,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
                         ],
                       ),

@@ -6,12 +6,8 @@ class StudentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Student Dashboard'),
-      ),
-      body: const Center(
-        child: Text('Student screen'),
-      ),
+      appBar: AppBar(title: const Text('Student Dashboard')),
+      body: const Center(child: Text('Student screen')),
     );
   }
 }

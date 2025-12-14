@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'screens/login_screen.dart';
+import 'screens/reset_password_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,8 +23,41 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       title: 'Hostel Management System',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const LoginScreen(),
+      home: const AuthWrapper(),
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/reset-password': (context) => const ResetPasswordScreen(),
+      },
       debugShowCheckedModeBanner: false,
     );
+  }
+}
+
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    _handleAuthStateChange();
+  }
+
+  void _handleAuthStateChange() {
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final event = data.event;
+      if (event == AuthChangeEvent.passwordRecovery) {
+        Navigator.of(context).pushReplacementNamed('/reset-password');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const LoginScreen();
   }
 }

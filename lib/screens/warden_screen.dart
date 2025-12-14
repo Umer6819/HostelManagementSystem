@@ -6,12 +6,8 @@ class WardenScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Warden Dashboard'),
-      ),
-      body: const Center(
-        child: Text('Warden screen'),
-      ),
+      appBar: AppBar(title: const Text('Warden Dashboard')),
+      body: const Center(child: Text('Warden screen')),
     );
   }
 }
