@@ -65,9 +65,9 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -78,9 +78,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
   Widget build(BuildContext context) {
     final isEdit = widget.room != null;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(isEdit ? 'Edit Room' : 'Add Room'),
-      ),
+      appBar: AppBar(title: Text(isEdit ? 'Edit Room' : 'Add Room')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(

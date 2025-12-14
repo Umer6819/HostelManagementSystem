@@ -22,11 +22,15 @@ class RoomService {
     required int capacity,
     String status = 'unlocked',
   }) async {
-    final response = await supabase.from('rooms').insert({
-      'room_number': roomNumber,
-      'capacity': capacity,
-      'status': status,
-    }).select().single();
+    final response = await supabase
+        .from('rooms')
+        .insert({
+          'room_number': roomNumber,
+          'capacity': capacity,
+          'status': status,
+        })
+        .select()
+        .single();
 
     return Room.fromJson(response as Map<String, dynamic>);
   }

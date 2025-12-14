@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'admin/user_list_view.dart';
 import 'admin/user_form_screen.dart';
 import 'admin/room_list_screen.dart';
+import 'admin/student_management_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -19,12 +20,11 @@ class _AdminScreenState extends State<AdminScreen> {
     final views = [
       UserListView(key: _userListKey),
       const RoomListScreen(),
+      const StudentManagementScreen(),
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-      ),
+      appBar: AppBar(title: const Text('Admin Dashboard')),
       body: views[_selectedIndex],
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
@@ -48,7 +48,11 @@ class _AdminScreenState extends State<AdminScreen> {
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Users'),
-          BottomNavigationBarItem(icon: Icon(Icons.meeting_room), label: 'Rooms'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.meeting_room),
+            label: 'Rooms',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Students'),
         ],
       ),
     );

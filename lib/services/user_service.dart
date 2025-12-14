@@ -76,4 +76,12 @@ class UserService {
     // Delete from profiles table (auth.users will be handled by cascade or manually)
     await supabase.from('profiles').delete().eq('id', userId);
   }
+
+  // Activate/Deactivate user account
+  Future<void> toggleAccountActive(String userId, bool isActive) async {
+    await supabase
+        .from('profiles')
+        .update({'account_active': isActive})
+        .eq('id', userId);
+  }
 }

@@ -26,15 +26,13 @@ class _RoomListScreenState extends State<RoomListScreen> {
   Future<void> _loadRooms() async {
     setState(() => _loading = true);
     try {
-      final rooms = await _roomService.fetchRooms(
-        status: _statusFilter,
-      );
+      final rooms = await _roomService.fetchRooms(status: _statusFilter);
       if (mounted) setState(() => _rooms = rooms);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading rooms: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading rooms: $e')));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -73,16 +71,16 @@ class _RoomListScreenState extends State<RoomListScreen> {
     try {
       await _roomService.deleteRoom(room.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Room deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Room deleted')));
         _loadRooms();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting room: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error deleting room: $e')));
       }
     }
   }
@@ -101,9 +99,9 @@ class _RoomListScreenState extends State<RoomListScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating lock: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error updating lock: $e')));
       }
     }
   }
@@ -124,10 +122,7 @@ class _RoomListScreenState extends State<RoomListScreen> {
           ],
           onChanged: (val) => setState(() => _statusFilter = val),
         ),
-        ElevatedButton(
-          onPressed: _loadRooms,
-          child: const Text('Apply'),
-        ),
+        ElevatedButton(onPressed: _loadRooms, child: const Text('Apply')),
         TextButton(
           onPressed: () {
             setState(() {
@@ -174,29 +169,24 @@ class _RoomListScreenState extends State<RoomListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rooms'),
-      ),
+      appBar: AppBar(title: const Text('Rooms')),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: _buildFilters(),
-          ),
+          Padding(padding: const EdgeInsets.all(12), child: _buildFilters()),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadRooms,
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _rooms.isEmpty
-                      ? const Center(child: Text('No rooms'))
-                      : ListView.builder(
-                          itemCount: _rooms.length,
-                          itemBuilder: (context, index) {
-                            final room = _rooms[index];
-                            return _buildRoomCard(room);
-                          },
-                        ),
+                  ? const Center(child: Text('No rooms'))
+                  : ListView.builder(
+                      itemCount: _rooms.length,
+                      itemBuilder: (context, index) {
+                        final room = _rooms[index];
+                        return _buildRoomCard(room);
+                      },
+                    ),
             ),
           ),
         ],
