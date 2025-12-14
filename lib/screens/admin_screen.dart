@@ -3,6 +3,8 @@ import 'admin/user_list_view.dart';
 import 'admin/user_form_screen.dart';
 import 'admin/room_list_screen.dart';
 import 'admin/student_management_screen.dart';
+import 'admin/fee_management_screen.dart';
+import 'admin/payment_history_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -21,6 +23,8 @@ class _AdminScreenState extends State<AdminScreen> {
       UserListView(key: _userListKey),
       const RoomListScreen(),
       const StudentManagementScreen(),
+      const FeeManagementScreen(),
+      const PaymentHistoryScreen(),
     ];
 
     return Scaffold(
@@ -42,6 +46,7 @@ class _AdminScreenState extends State<AdminScreen> {
             )
           : null,
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() => _selectedIndex = index);
@@ -53,6 +58,8 @@ class _AdminScreenState extends State<AdminScreen> {
             label: 'Rooms',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Students'),
+          BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Fees'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Payments'),
         ],
       ),
     );
