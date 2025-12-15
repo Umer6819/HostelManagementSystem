@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/admin_screen.dart';
+import 'screens/warden_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,10 +25,11 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       title: 'Hostel Management System',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const AdminScreen(),
+      home: const WardenScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/reset-password': (context) => const ResetPasswordScreen(),
+        '/admin': (context) => const AdminScreen(),
       },
       debugShowCheckedModeBanner: false,
     );
