@@ -16,26 +16,26 @@ class UserService {
   Future<List<models.User>> fetchUsersByRole(String role) async {
     // Exact match; consider using fetchWardens() for flexible matching
     final response = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', role);
+        .from('profiles')
+        .select('*')
+        .eq('role', role);
     return (response as List)
         .map((u) => models.User.fromJson(u as Map<String, dynamic>))
         .toList();
   }
 
-    // Fetch wardens with case-insensitive and trailing-space tolerant matching
-    Future<List<models.User>> fetchWardens() async {
+  // Fetch wardens with case-insensitive and trailing-space tolerant matching
+  Future<List<models.User>> fetchWardens() async {
     final response = await supabase
-      .from('profiles')
-      .select('*')
+        .from('profiles')
+        .select('*')
         // Matches 'warden' in any case and with stray spaces
         .ilike('role', '%warden%')
-      .order('email');
+        .order('email');
     return (response as List)
-      .map((u) => models.User.fromJson(u as Map<String, dynamic>))
-      .toList();
-    }
+        .map((u) => models.User.fromJson(u as Map<String, dynamic>))
+        .toList();
+  }
 
   // Create new user (via Supabase Admin API)
   Future<models.User> createUser(

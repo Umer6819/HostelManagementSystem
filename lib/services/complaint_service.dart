@@ -26,10 +26,10 @@ class ComplaintService {
         .toList();
   }
 
-    Future<void> assignWarden(int complaintId, String? wardenId) async {
+  Future<void> assignWarden(int complaintId, String? wardenId) async {
     await supabase
         .from('complaints')
-      .update({'assigned_warden': wardenId})
+        .update({'assigned_warden': wardenId})
         .eq('id', complaintId);
   }
 
@@ -40,9 +40,6 @@ class ComplaintService {
       updateData['resolved_at'] = DateTime.now().toIso8601String();
     }
 
-    await supabase
-        .from('complaints')
-        .update(updateData)
-        .eq('id', complaintId);
+    await supabase.from('complaints').update(updateData).eq('id', complaintId);
   }
 }

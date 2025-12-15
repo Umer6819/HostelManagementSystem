@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin/reports_screen.dart';
 import 'admin/user_list_view.dart';
 import 'admin/user_form_screen.dart';
 import 'admin/room_list_screen.dart';
@@ -21,6 +22,7 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     final views = [
+      const ReportsScreen(),
       UserListView(key: _userListKey),
       const RoomListScreen(),
       const StudentManagementScreen(),
@@ -32,7 +34,7 @@ class _AdminScreenState extends State<AdminScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Admin Dashboard')),
       body: views[_selectedIndex],
-      floatingActionButton: _selectedIndex == 0
+      floatingActionButton: _selectedIndex == 1
           ? FloatingActionButton(
               onPressed: () async {
                 await Navigator.push(
@@ -54,6 +56,10 @@ class _AdminScreenState extends State<AdminScreen> {
           setState(() => _selectedIndex = index);
         },
         items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Reports',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Users'),
           BottomNavigationBarItem(
             icon: Icon(Icons.meeting_room),
@@ -62,7 +68,10 @@ class _AdminScreenState extends State<AdminScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Students'),
           BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Fees'),
           BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Payments'),
-          BottomNavigationBarItem(icon: Icon(Icons.report_problem), label: 'Complaints'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.report_problem),
+            label: 'Complaints',
+          ),
         ],
       ),
     );

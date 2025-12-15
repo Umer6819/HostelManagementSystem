@@ -45,6 +45,11 @@ class StudentService {
         .select()
         .single();
 
+    // Bump occupancy if a room was assigned at creation time.
+    if (roomId != null) {
+      await _incrementRoomOccupancy(roomId);
+    }
+
     return Student.fromJson(response as Map<String, dynamic>);
   }
 
@@ -59,26 +64,86 @@ class StudentService {
     if (regNo != null) updateData['reg_no'] = regNo;
     if (name != null) updateData['name'] = name;
     if (phone != null) updateData['phone'] = phone;
-    if (roomId != null) updateData['room_id'] = roomId;
+    // Handle room changes via assignRoom to keep occupancy in sync.
+    if (roomId != null) {
+      await assignRoom(id, roomId);
+    }
 
-    final response = await supabase
+    if (updateData.isNotEmpty) {
+      await supabase.from('students').update(updateData).eq('id', id);
+    }
+
+    final refreshed = await supabase
         .from('students')
-        .update(updateData)
+        .select('*')
         .eq('id', id)
-        .select()
         .single();
 
-    return Student.fromJson(response as Map<String, dynamic>);
+    return Student.fromJson(refreshed as Map<String, dynamic>);
   }
 
   Future<void> assignRoom(String studentId, int? roomId) async {
+    // Get current assignment
+    final current = await supabase
+        .from('students')
+        .select('room_id')
+        .eq('id', studentId)
+        .single();
+
+    final int? previousRoomId = current['room_id'] as int?;
+
+    // No change, nothing to do
+    if (previousRoomId == roomId) return;
+
+    // Update student assignment
     await supabase
         .from('students')
         .update({'room_id': roomId})
         .eq('id', studentId);
+
+    // Decrement previous room occupancy
+    if (previousRoomId != null) {
+      await _decrementRoomOccupancy(previousRoomId);
+    }
+
+    // Increment new room occupancy
+    if (roomId != null) {
+      await _incrementRoomOccupancy(roomId);
+    }
   }
 
   Future<void> deleteStudent(String id) async {
     await supabase.from('students').delete().eq('id', id);
+  }
+
+  Future<void> _incrementRoomOccupancy(int roomId) async {
+    final room = await supabase
+        .from('rooms')
+        .select('occupied, capacity')
+        .eq('id', roomId)
+        .maybeSingle();
+
+    if (room == null) return;
+    final occupied = (room['occupied'] as int? ?? 0) + 1;
+    final capacity = room['capacity'] as int?;
+    final next = capacity != null && capacity > 0 && occupied > capacity
+        ? capacity
+        : occupied;
+
+    await supabase.from('rooms').update({'occupied': next}).eq('id', roomId);
+  }
+
+  Future<void> _decrementRoomOccupancy(int roomId) async {
+    final room = await supabase
+        .from('rooms')
+        .select('occupied')
+        .eq('id', roomId)
+        .maybeSingle();
+
+    if (room == null) return;
+    final occupied = (room['occupied'] as int? ?? 0) - 1;
+    final next = occupied < 0 ? 0 : occupied;
+
+    await supabase.from('rooms').update({'occupied': next}).eq('id', roomId);
   }
 }

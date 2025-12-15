@@ -57,9 +57,9 @@ class _ComplaintManagementScreenState extends State<ComplaintManagementScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading complaints: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading complaints: $e')));
       }
       setState(() => _isLoading = false);
     }
@@ -151,7 +151,10 @@ class _ComplaintManagementScreenState extends State<ComplaintManagementScreen> {
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Assign to warden',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -173,16 +176,22 @@ class _ComplaintManagementScreenState extends State<ComplaintManagementScreen> {
                         return const ListTile(
                           leading: Icon(Icons.info_outline),
                           title: Text('No wardens found'),
-                          subtitle: Text('Ensure profiles.role contains "warden" and admin can read profiles.'),
+                          subtitle: Text(
+                            'Ensure profiles.role contains "warden" and admin can read profiles.',
+                          ),
                         );
                       }
                       final warden = _wardens[index - 1];
-                      final isSelected = complaint.assignedWardenId == warden.id;
+                      final isSelected =
+                          complaint.assignedWardenId == warden.id;
                       return ListTile(
                         leading: const Icon(Icons.person_outline),
                         title: Text(warden.email),
                         trailing: isSelected
-                            ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+                            ? Icon(
+                                Icons.check,
+                                color: Theme.of(context).colorScheme.primary,
+                              )
                             : null,
                         onTap: () => Navigator.pop(context, warden.id),
                       );
@@ -203,16 +212,18 @@ class _ComplaintManagementScreenState extends State<ComplaintManagementScreen> {
       await _complaintService.assignWarden(complaint.id, valueToStore);
       await _loadData();
       if (mounted) {
-        final message = selected == '' ? 'Assignment cleared' : 'Assigned to warden';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        final message = selected == ''
+            ? 'Assignment cleared'
+            : 'Assigned to warden';
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error assigning warden: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error assigning warden: $e')));
       }
     } finally {
       setState(() => _isAssigning = false);
@@ -230,15 +241,18 @@ class _ComplaintManagementScreenState extends State<ComplaintManagementScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating status: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error updating status: $e')));
       }
     }
   }
 
   String _labelFor(String status) {
-    return _statusOptions.firstWhere((opt) => opt['value'] == status, orElse: () => {})['label'] ??
+    return _statusOptions.firstWhere(
+          (opt) => opt['value'] == status,
+          orElse: () => {},
+        )['label'] ??
         status;
   }
 
@@ -255,94 +269,101 @@ class _ComplaintManagementScreenState extends State<ComplaintManagementScreen> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _filteredComplaints.isEmpty
-                      ? const Center(child: Text('No complaints found'))
-                      : ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          itemCount: _filteredComplaints.length,
-                          itemBuilder: (context, index) {
-                            final complaint = _filteredComplaints[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              child: ListTile(
-                                title: Text(complaint.title),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 4),
-                                    Text('Student: ${_studentName(complaint.studentId)}'),
-                                    Text('Assigned: ${_wardenLabel(complaint.assignedWardenId)}'),
-                                    Text('Status: ${_labelFor(complaint.status)}'),
-                                    Text('Created: ${complaint.createdAt.toLocal().toString().split('.')[0]}'),
-                                    Text('Resolution time: ${_resolutionTime(complaint)}'),
-                                  ],
+                  ? const Center(child: Text('No complaints found'))
+                  : ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: _filteredComplaints.length,
+                      itemBuilder: (context, index) {
+                        final complaint = _filteredComplaints[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          child: ListTile(
+                            title: Text(complaint.title),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Student: ${_studentName(complaint.studentId)}',
                                 ),
-                                trailing: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _statusColor(complaint.status),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          _labelFor(complaint.status),
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                                Text(
+                                  'Assigned: ${_wardenLabel(complaint.assignedWardenId)}',
+                                ),
+                                Text('Status: ${_labelFor(complaint.status)}'),
+                                Text(
+                                  'Created: ${complaint.createdAt.toLocal().toString().split('.')[0]}',
+                                ),
+                                Text(
+                                  'Resolution time: ${_resolutionTime(complaint)}',
+                                ),
+                              ],
+                            ),
+                            trailing: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _statusColor(complaint.status),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      _labelFor(complaint.status),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      const SizedBox(width: 8),
-                                      PopupMenuButton<String>(
-                                        icon: const Icon(Icons.more_vert, size: 20),
-                                        onSelected: (value) {
-                                          if (value == 'assign') {
-                                            _assignWarden(complaint);
-                                          } else {
-                                            _updateStatus(complaint, value);
-                                          }
-                                        },
-                                        itemBuilder: (context) => const [
-                                          PopupMenuItem(
-                                            value: 'assign',
-                                            child: Text('Assign warden'),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'pending',
-                                            child: Text('Mark Pending'),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'in_progress',
-                                            child: Text('Mark In progress'),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'resolved',
-                                            child: Text('Mark Resolved'),
-                                          ),
-                                        ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  PopupMenuButton<String>(
+                                    icon: const Icon(Icons.more_vert, size: 20),
+                                    onSelected: (value) {
+                                      if (value == 'assign') {
+                                        _assignWarden(complaint);
+                                      } else {
+                                        _updateStatus(complaint, value);
+                                      }
+                                    },
+                                    itemBuilder: (context) => const [
+                                      PopupMenuItem(
+                                        value: 'assign',
+                                        child: Text('Assign warden'),
+                                      ),
+                                      PopupMenuItem(
+                                        value: 'pending',
+                                        child: Text('Mark Pending'),
+                                      ),
+                                      PopupMenuItem(
+                                        value: 'in_progress',
+                                        child: Text('Mark In progress'),
+                                      ),
+                                      PopupMenuItem(
+                                        value: 'resolved',
+                                        child: Text('Mark Resolved'),
                                       ),
                                     ],
                                   ),
-                                ),
-                                onTap: () => _showDetails(complaint),
+                                ],
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                            onTap: () => _showDetails(complaint),
+                          ),
+                        );
+                      },
+                    ),
             ),
-            if (_isAssigning)
-              const LinearProgressIndicator(minHeight: 2),
+            if (_isAssigning) const LinearProgressIndicator(minHeight: 2),
           ],
         ),
       ),
@@ -368,7 +389,10 @@ class _ComplaintManagementScreenState extends State<ComplaintManagementScreen> {
                 value: 'in_progress',
                 label: Text('In progress'),
               ),
-              ButtonSegment<String?>(value: 'resolved', label: Text('Resolved')),
+              ButtonSegment<String?>(
+                value: 'resolved',
+                label: Text('Resolved'),
+              ),
             ],
             selected: {_selectedStatus},
             onSelectionChanged: (selection) {
@@ -400,19 +424,25 @@ class _ComplaintManagementScreenState extends State<ComplaintManagementScreen> {
                 const SizedBox(height: 4),
                 Text('Assigned: ${_wardenLabel(complaint.assignedWardenId)}'),
                 const SizedBox(height: 4),
-                Text('Created: ${complaint.createdAt.toLocal().toString().split('.')[0]}'),
+                Text(
+                  'Created: ${complaint.createdAt.toLocal().toString().split('.')[0]}',
+                ),
                 const SizedBox(height: 4),
                 if (complaint.resolvedAt != null)
-                  Text('Resolved: ${complaint.resolvedAt!.toLocal().toString().split('.')[0]}'),
+                  Text(
+                    'Resolved: ${complaint.resolvedAt!.toLocal().toString().split('.')[0]}',
+                  ),
                 const SizedBox(height: 12),
                 const Text(
                   'Description',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 6),
-                Text(complaint.description.isEmpty
-                    ? 'No description provided'
-                    : complaint.description),
+                Text(
+                  complaint.description.isEmpty
+                      ? 'No description provided'
+                      : complaint.description,
+                ),
                 const SizedBox(height: 12),
                 Text('Resolution time: ${_resolutionTime(complaint)}'),
               ],
