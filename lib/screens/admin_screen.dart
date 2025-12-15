@@ -7,6 +7,7 @@ import 'admin/student_management_screen.dart';
 import 'admin/fee_management_screen.dart';
 import 'admin/payment_history_screen.dart';
 import 'admin/complaint_management_screen.dart';
+import 'admin/settings_screen.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -29,6 +30,7 @@ class _AdminScreenState extends State<AdminScreen> {
       const FeeManagementScreen(),
       const PaymentHistoryScreen(),
       const ComplaintManagementScreen(),
+      const SettingsScreen(),
     ];
 
     return Scaffold(
@@ -71,6 +73,10 @@ class _AdminScreenState extends State<AdminScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.report_problem),
             label: 'Complaints',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
