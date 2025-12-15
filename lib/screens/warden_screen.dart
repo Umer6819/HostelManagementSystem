@@ -16,22 +16,25 @@ class _WardenScreenState extends State<WardenScreen>
   late TabController _tabController;
   final ComplaintService _complaintService = ComplaintService();
   final StudentService _studentService = StudentService();
+  final TextEditingController _searchController = TextEditingController();
 
   List<Complaint> _assignedComplaints = [];
   List<Student> _students = [];
   bool _isLoading = true;
   String? _selectedStatus;
+  String _studentSearchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadData();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -51,12 +54,27 @@ class _WardenScreenState extends State<WardenScreen>
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading data: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading data: $e')));
       }
       setState(() => _isLoading = false);
     }
+  }
+
+  List<Student> _getFilteredStudents() {
+    if (_studentSearchQuery.isEmpty) {
+      return _students;
+    }
+    final query = _studentSearchQuery.toLowerCase();
+    return _students
+        .where(
+          (student) =>
+              student.name.toLowerCase().contains(query) ||
+              student.regNo.toLowerCase().contains(query) ||
+              (student.roomId?.toString().contains(query) ?? false),
+        )
+        .toList();
   }
 
   List<Complaint> _getFilteredComplaints() {
@@ -99,20 +117,24 @@ class _WardenScreenState extends State<WardenScreen>
   }
 
   Future<void> _updateComplaintStatus(
-      Complaint complaint, String newStatus) async {
+    Complaint complaint,
+    String newStatus,
+  ) async {
     try {
       await _complaintService.updateStatus(complaint.id, newStatus);
       await _loadData();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Complaint marked as ${_statusLabel(newStatus)}')),
+          SnackBar(
+            content: Text('Complaint marked as ${_statusLabel(newStatus)}'),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating complaint: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error updating complaint: $e')));
       }
     }
   }
@@ -126,6 +148,7 @@ class _WardenScreenState extends State<WardenScreen>
           controller: _tabController,
           tabs: const [
             Tab(text: 'My Complaints'),
+            Tab(text: 'Student Monitoring'),
             Tab(text: 'Assigned Rooms'),
           ],
         ),
@@ -136,6 +159,7 @@ class _WardenScreenState extends State<WardenScreen>
               controller: _tabController,
               children: [
                 _buildComplaintsTab(),
+                _buildStudentMonitoringTab(),
                 _buildRoomsTab(),
               ],
             ),
@@ -144,7 +168,7 @@ class _WardenScreenState extends State<WardenScreen>
 
   Widget _buildComplaintsTab() {
     final filtered = _getFilteredComplaints();
-    
+
     return RefreshIndicator(
       onRefresh: _loadData,
       child: Column(
@@ -156,10 +180,21 @@ class _WardenScreenState extends State<WardenScreen>
               child: Row(
                 children: [
                   _buildFilterChip(null, 'All', _selectedStatus == null),
-                  _buildFilterChip('pending', 'Pending', _selectedStatus == 'pending'),
                   _buildFilterChip(
-                      'in_progress', 'In Progress', _selectedStatus == 'in_progress'),
-                  _buildFilterChip('resolved', 'Resolved', _selectedStatus == 'resolved'),
+                    'pending',
+                    'Pending',
+                    _selectedStatus == 'pending',
+                  ),
+                  _buildFilterChip(
+                    'in_progress',
+                    'In Progress',
+                    _selectedStatus == 'in_progress',
+                  ),
+                  _buildFilterChip(
+                    'resolved',
+                    'Resolved',
+                    _selectedStatus == 'resolved',
+                  ),
                 ],
               ),
             ),
@@ -180,7 +215,9 @@ class _WardenScreenState extends State<WardenScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 4),
-                              Text('Student: ${_studentName(complaint.studentId)}'),
+                              Text(
+                                'Student: ${_studentName(complaint.studentId)}',
+                              ),
                               Text('Status: ${_statusLabel(complaint.status)}'),
                               Text(
                                 'Created: ${complaint.createdAt.toLocal().toString().split('.')[0]}',
@@ -206,6 +243,89 @@ class _WardenScreenState extends State<WardenScreen>
                             ),
                           ),
                           onTap: () => _showComplaintDetails(complaint),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStudentMonitoringTab() {
+    final filtered = _getFilteredStudents();
+
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by name, reg no, or room',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _studentSearchQuery = '');
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() => _studentSearchQuery = value);
+              },
+            ),
+          ),
+          Expanded(
+            child: filtered.isEmpty
+                ? Center(
+                    child: Text(
+                      _studentSearchQuery.isEmpty
+                          ? 'No students assigned'
+                          : 'No students found',
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(12),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final student = filtered[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: ListTile(
+                          leading: const Icon(Icons.person),
+                          title: Text(
+                            student.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              Text('Reg No: ${student.regNo}'),
+                              Text(
+                                'Room: ${student.roomId != null ? 'Room ${student.roomId}' : 'Not assigned'}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 16,
+                          ),
+                          onTap: () => _showStudentDetails(student),
                         ),
                       );
                     },
@@ -246,13 +366,76 @@ class _WardenScreenState extends State<WardenScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Reg No: ${student.regNo}'),
-                  Text('Room: ${student.roomId != null ? 'Room ${student.roomId}' : 'Not assigned'}'),
+                  Text(
+                    'Room: ${student.roomId != null ? 'Room ${student.roomId}' : 'Not assigned'}',
+                  ),
                   if (student.phone != null) Text('Phone: ${student.phone}'),
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showStudentDetails(Student student) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(student.name),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Registration Number',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              Text(student.regNo),
+              const SizedBox(height: 12),
+              const Text(
+                'Room Assignment',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              Text(
+                student.roomId != null
+                    ? 'Room ${student.roomId}'
+                    : 'Not assigned',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: student.roomId != null ? Colors.blue : Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Contact Information',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              if (student.phone != null && student.phone!.isNotEmpty)
+                Row(
+                  children: [
+                    const Icon(Icons.phone, size: 16),
+                    const SizedBox(width: 8),
+                    Text(student.phone!),
+                  ],
+                )
+              else
+                const Text(
+                  'No phone number provided',
+                  style: TextStyle(color: Colors.grey),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }
@@ -280,9 +463,11 @@ class _WardenScreenState extends State<WardenScreen>
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(complaint.description.isEmpty
-                  ? 'No description provided'
-                  : complaint.description),
+              Text(
+                complaint.description.isEmpty
+                    ? 'No description provided'
+                    : complaint.description,
+              ),
             ],
           ),
         ),
