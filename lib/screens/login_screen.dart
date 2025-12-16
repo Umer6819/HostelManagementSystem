@@ -98,14 +98,14 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _navigateByRole(String role) {
-    final normalized = role.trim();
+    final normalized = role.trim().toLowerCase();
 
     Widget? destination;
-    if (normalized == 'student') {
+    if (normalized.contains('student')) {
       destination = const StudentScreen();
-    } else if (normalized == 'warden') {
+    } else if (normalized.contains('warden')) {
       destination = const WardenScreen();
-    } else if (normalized == 'admin') {
+    } else if (normalized.contains('admin')) {
       destination = const AdminScreen();
     }
 
