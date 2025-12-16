@@ -25,7 +25,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       title: 'Hostel Management System',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const WardenScreen(),
+      home: const LoginScreen(),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/reset-password': (context) => const ResetPasswordScreen(),

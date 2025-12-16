@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/complaint_service.dart';
 import '../services/student_service.dart';
+import '../services/room_service.dart';
+import '../services/maintenance_issue_service.dart';
+import '../services/room_lock_request_service.dart';
 import '../models/complaint_model.dart';
 import '../models/student_model.dart';
+import '../models/room_model.dart';
+import '../models/maintenance_issue_model.dart';
+import '../models/room_lock_request_model.dart';
 
 class WardenScreen extends StatefulWidget {
   const WardenScreen({super.key});
@@ -16,10 +23,16 @@ class _WardenScreenState extends State<WardenScreen>
   late TabController _tabController;
   final ComplaintService _complaintService = ComplaintService();
   final StudentService _studentService = StudentService();
+  final RoomService _roomService = RoomService();
+  final MaintenanceIssueService _maintenanceService = MaintenanceIssueService();
+  final RoomLockRequestService _lockRequestService = RoomLockRequestService();
   final TextEditingController _searchController = TextEditingController();
 
   List<Complaint> _assignedComplaints = [];
   List<Student> _students = [];
+  List<Room> _rooms = [];
+  List<MaintenanceIssue> _maintenanceIssues = [];
+  List<RoomLockRequest> _lockRequests = [];
   bool _isLoading = true;
   String? _selectedStatus;
   String _studentSearchQuery = '';
@@ -44,12 +57,18 @@ class _WardenScreenState extends State<WardenScreen>
       final results = await Future.wait([
         _complaintService.fetchAllComplaints(),
         _studentService.fetchAllStudents(),
+        _roomService.fetchRooms(),
+        _maintenanceService.fetchAllIssues(),
+        _lockRequestService.fetchAllRequests(),
       ]);
       final allComplaints = results[0] as List<Complaint>;
       // Filter complaints assigned to this warden (you'll need to get current user ID)
       setState(() {
         _assignedComplaints = allComplaints;
         _students = results[1] as List<Student>;
+        _rooms = results[2] as List<Room>;
+        _maintenanceIssues = results[3] as List<MaintenanceIssue>;
+        _lockRequests = results[4] as List<RoomLockRequest>;
         _isLoading = false;
       });
     } catch (e) {
@@ -149,7 +168,7 @@ class _WardenScreenState extends State<WardenScreen>
           tabs: const [
             Tab(text: 'My Complaints'),
             Tab(text: 'Student Monitoring'),
-            Tab(text: 'Assigned Rooms'),
+            Tab(text: 'Room Monitoring'),
           ],
         ),
       ),
@@ -352,30 +371,316 @@ class _WardenScreenState extends State<WardenScreen>
   Widget _buildRoomsTab() {
     return RefreshIndicator(
       onRefresh: _loadData,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(12),
-        itemCount: _students.length,
-        itemBuilder: (context, index) {
-          final student = _students[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: const Icon(Icons.person),
-              title: Text(student.name),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Reg No: ${student.regNo}'),
-                  Text(
-                    'Room: ${student.roomId != null ? 'Room ${student.roomId}' : 'Not assigned'}',
-                  ),
-                  if (student.phone != null) Text('Phone: ${student.phone}'),
-                ],
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Room Occupancy Section
+              _buildSectionHeader('Room Occupancy', Icons.meeting_room),
+              const SizedBox(height: 12),
+              _buildRoomOccupancyCards(),
+              const SizedBox(height: 24),
+
+              // Maintenance Issues Section
+              _buildSectionHeader('Maintenance Issues', Icons.build),
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: _showReportMaintenanceDialog,
+                icon: const Icon(Icons.add),
+                label: const Text('Report New Issue'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildMaintenanceIssuesList(),
+              const SizedBox(height: 24),
+
+              // Room Lock Requests Section
+              _buildSectionHeader('Room Lock Requests', Icons.lock),
+              const SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: _showRoomLockRequestDialog,
+                icon: const Icon(Icons.add),
+                label: const Text('Request Room Lock'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildLockRequestsList(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, size: 24, color: Colors.blue),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoomOccupancyCards() {
+    if (_rooms.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text('No rooms available'),
+        ),
+      );
+    }
+
+    return Column(
+      children: _rooms.map((room) {
+        final occupancyRate = room.capacity > 0
+            ? (room.occupied / room.capacity * 100).toInt()
+            : 0;
+        final Color statusColor = occupancyRate >= 100
+            ? Colors.red
+            : occupancyRate >= 80
+            ? Colors.orange
+            : Colors.green;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Room ${room.roomNumber}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${room.occupied}/${room.capacity}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: room.capacity > 0 ? room.occupied / room.capacity : 0,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                  minHeight: 8,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$occupancyRate% occupied',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildMaintenanceIssuesList() {
+    if (_maintenanceIssues.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(child: Text('No maintenance issues reported')),
+        ),
+      );
+    }
+
+    return Column(
+      children: _maintenanceIssues.take(5).map((issue) {
+        final room = _rooms.firstWhere(
+          (r) => r.id == issue.roomId,
+          orElse: () => Room(
+            id: 0,
+            roomNumber: 'Unknown',
+            capacity: 0,
+            occupied: 0,
+            status: 'unlocked',
+          ),
+        );
+
+        Color statusColor;
+        switch (issue.status) {
+          case 'resolved':
+            statusColor = Colors.green;
+            break;
+          case 'in_progress':
+            statusColor = Colors.blue;
+            break;
+          default:
+            statusColor = Colors.orange;
+        }
+
+        Color priorityColor;
+        switch (issue.priority) {
+          case 'urgent':
+            priorityColor = Colors.red;
+            break;
+          case 'high':
+            priorityColor = Colors.orange;
+            break;
+          case 'medium':
+            priorityColor = Colors.yellow[700]!;
+            break;
+          default:
+            priorityColor = Colors.grey;
+        }
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: Icon(Icons.build, color: priorityColor),
+            title: Text(issue.issueType),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text('Room: ${room.roomNumber}'),
+                Text('Priority: ${issue.priority.toUpperCase()}'),
+                Text(
+                  issue.description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                issue.status.replaceAll('_', ' ').toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          );
-        },
-      ),
+            onTap: () => _showMaintenanceIssueDetails(issue, room),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildLockRequestsList() {
+    if (_lockRequests.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(child: Text('No room lock requests')),
+        ),
+      );
+    }
+
+    return Column(
+      children: _lockRequests.take(5).map((request) {
+        final room = _rooms.firstWhere(
+          (r) => r.id == request.roomId,
+          orElse: () => Room(
+            id: 0,
+            roomNumber: 'Unknown',
+            capacity: 0,
+            occupied: 0,
+            status: 'unlocked',
+          ),
+        );
+
+        Color statusColor;
+        switch (request.status) {
+          case 'approved':
+            statusColor = Colors.green;
+            break;
+          case 'rejected':
+            statusColor = Colors.red;
+            break;
+          default:
+            statusColor = Colors.orange;
+        }
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            leading: Icon(
+              request.status == 'approved'
+                  ? Icons.lock
+                  : request.status == 'rejected'
+                  ? Icons.lock_open
+                  : Icons.lock_clock,
+              color: statusColor,
+            ),
+            title: Text('Room ${room.roomNumber}'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text(
+                  request.reason,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  'Requested: ${request.createdAt.toLocal().toString().split('.')[0]}',
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                request.status.toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            onTap: () => _showLockRequestDetails(request, room),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -496,5 +801,505 @@ class _WardenScreenState extends State<WardenScreen>
         ],
       ),
     );
+  }
+
+  void _showReportMaintenanceDialog() {
+    final formKey = GlobalKey<FormState>();
+    int? selectedRoomId;
+    String issueType = '';
+    String description = '';
+    String priority = 'medium';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Report Maintenance Issue'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<int>(
+                  decoration: const InputDecoration(
+                    labelText: 'Select Room',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _rooms.map((room) {
+                    return DropdownMenuItem(
+                      value: room.id,
+                      child: Text('Room ${room.roomNumber}'),
+                    );
+                  }).toList(),
+                  onChanged: (value) => selectedRoomId = value,
+                  validator: (value) =>
+                      value == null ? 'Please select a room' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Issue Type',
+                    hintText: 'e.g., Plumbing, Electrical, Furniture',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) => issueType = value,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter issue type'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                  onChanged: (value) => description = value,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter description'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: 'Priority',
+                    border: OutlineInputBorder(),
+                  ),
+                  value: priority,
+                  items: const [
+                    DropdownMenuItem(value: 'low', child: Text('Low')),
+                    DropdownMenuItem(value: 'medium', child: Text('Medium')),
+                    DropdownMenuItem(value: 'high', child: Text('High')),
+                    DropdownMenuItem(value: 'urgent', child: Text('Urgent')),
+                  ],
+                  onChanged: (value) => priority = value ?? 'medium',
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                try {
+                  final uid = Supabase.instance.client.auth.currentUser?.id;
+                  if (uid == null) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'You must be logged in to report an issue.',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  await _maintenanceService.createIssue(
+                    roomId: selectedRoomId!,
+                    reportedBy: uid,
+                    issueType: issueType,
+                    description: description,
+                    priority: priority,
+                  );
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Maintenance issue reported successfully',
+                        ),
+                      ),
+                    );
+                    _loadData();
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                  }
+                }
+              }
+            },
+            child: const Text('Submit'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRoomLockRequestDialog() {
+    final formKey = GlobalKey<FormState>();
+    int? selectedRoomId;
+    String reason = '';
+    DateTime? lockUntil;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Request Room Lock'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<int>(
+                    decoration: const InputDecoration(
+                      labelText: 'Select Room',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _rooms.map((room) {
+                      return DropdownMenuItem(
+                        value: room.id,
+                        child: Text('Room ${room.roomNumber}'),
+                      );
+                    }).toList(),
+                    onChanged: (value) => selectedRoomId = value,
+                    validator: (value) =>
+                        value == null ? 'Please select a room' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Reason',
+                      hintText: 'Why do you need to lock this room?',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                    onChanged: (value) => reason = value,
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Please enter reason'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    title: const Text('Lock Until (Optional)'),
+                    subtitle: Text(
+                      lockUntil != null
+                          ? lockUntil.toString().split('.')[0]
+                          : 'Not set',
+                    ),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now().add(
+                          const Duration(days: 1),
+                        ),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (date != null) {
+                        final time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (time != null) {
+                          setState(() {
+                            lockUntil = DateTime(
+                              date.year,
+                              date.month,
+                              date.day,
+                              time.hour,
+                              time.minute,
+                            );
+                          });
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  try {
+                    final uid = Supabase.instance.client.auth.currentUser?.id;
+                    if (uid == null) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'You must be logged in to request a lock.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    await _lockRequestService.createRequest(
+                      roomId: selectedRoomId!,
+                      requestedBy: uid,
+                      reason: reason,
+                      lockUntil: lockUntil,
+                    );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Room lock request submitted'),
+                        ),
+                      );
+                      _loadData();
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                    }
+                  }
+                }
+              },
+              style: FilledButton.styleFrom(backgroundColor: Colors.orange),
+              child: const Text('Submit Request'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMaintenanceIssueDetails(MaintenanceIssue issue, Room room) {
+    Color priorityColor;
+    switch (issue.priority) {
+      case 'urgent':
+        priorityColor = Colors.red;
+        break;
+      case 'high':
+        priorityColor = Colors.orange;
+        break;
+      case 'medium':
+        priorityColor = Colors.yellow[700]!;
+        break;
+      default:
+        priorityColor = Colors.grey;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(issue.issueType),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.meeting_room, size: 20),
+                  const SizedBox(width: 8),
+                  Text('Room: ${room.roomNumber}'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.priority_high, size: 20, color: priorityColor),
+                  const SizedBox(width: 8),
+                  Text('Priority: ${issue.priority.toUpperCase()}'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 20),
+                  const SizedBox(width: 8),
+                  Text('Status: ${issue.status.replaceAll('_', ' ')}'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.access_time, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Reported: ${issue.createdAt.toLocal().toString().split('.')[0]}',
+                  ),
+                ],
+              ),
+              if (issue.resolvedAt != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      size: 20,
+                      color: Colors.green,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Resolved: ${issue.resolvedAt!.toLocal().toString().split('.')[0]}',
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              const Text(
+                'Description',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(issue.description),
+              if (issue.resolutionNotes != null) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'Resolution Notes',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(issue.resolutionNotes!),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLockRequestDetails(RoomLockRequest request, Room room) {
+    Color statusColor;
+    switch (request.status) {
+      case 'approved':
+        statusColor = Colors.green;
+        break;
+      case 'rejected':
+        statusColor = Colors.red;
+        break;
+      default:
+        statusColor = Colors.orange;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Room Lock Request - ${room.roomNumber}'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    request.status == 'approved'
+                        ? Icons.check_circle
+                        : request.status == 'rejected'
+                        ? Icons.cancel
+                        : Icons.pending,
+                    color: statusColor,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Status: ${request.status.toUpperCase()}'),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.access_time, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Requested: ${request.createdAt.toLocal().toString().split('.')[0]}',
+                  ),
+                ],
+              ),
+              if (request.lockUntil != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.schedule, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Lock Until: ${request.lockUntil!.toLocal().toString().split('.')[0]}',
+                    ),
+                  ],
+                ),
+              ],
+              if (request.reviewedAt != null) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.rate_review, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Reviewed: ${request.reviewedAt!.toLocal().toString().split('.')[0]}',
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              const Text(
+                'Reason',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(request.reason),
+              if (request.reviewNotes != null) ...[
+                const SizedBox(height: 16),
+                const Text(
+                  'Review Notes',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(request.reviewNotes!),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          if (request.status == 'pending')
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _deleteLockRequest(request.id);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Cancel Request'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteLockRequest(String requestId) async {
+    try {
+      await _lockRequestService.deleteRequest(requestId);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Request cancelled')));
+        _loadData();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
 }

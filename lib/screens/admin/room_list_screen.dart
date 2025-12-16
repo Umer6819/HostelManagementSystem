@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../models/room_model.dart';
 import '../../services/room_service.dart';
 import 'room_form_screen.dart';
+import 'room_lock_requests_screen.dart';
+import 'maintenance_management_screen.dart';
 
 class RoomListScreen extends StatefulWidget {
   const RoomListScreen({super.key});
@@ -173,6 +175,46 @@ class _RoomListScreenState extends State<RoomListScreen> {
       body: Column(
         children: [
           Padding(padding: const EdgeInsets.all(12), child: _buildFilters()),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const RoomLockRequestsScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.lock_clock),
+              label: const Text('View Room Lock Requests'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MaintenanceManagementScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.build),
+              label: const Text('Manage Maintenance Issues'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadRooms,
