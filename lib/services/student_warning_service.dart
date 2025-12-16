@@ -10,7 +10,7 @@ class StudentWarningService {
           .from('student_warnings')
           .select('*')
           .order('created_at', ascending: false);
-      
+
       return (response as List)
           .map((json) => StudentWarning.fromJson(json))
           .toList();
@@ -26,7 +26,7 @@ class StudentWarningService {
           .select('*')
           .eq('student_id', studentId)
           .order('created_at', ascending: false);
-      
+
       return (response as List)
           .map((json) => StudentWarning.fromJson(json))
           .toList();
@@ -43,7 +43,7 @@ class StudentWarningService {
           .eq('student_id', studentId)
           .eq('is_active', true)
           .order('created_at', ascending: false);
-      
+
       return (response as List)
           .map((json) => StudentWarning.fromJson(json))
           .toList();
@@ -72,7 +72,7 @@ class StudentWarningService {
           })
           .select()
           .single();
-      
+
       return StudentWarning.fromJson(response);
     } catch (e) {
       throw Exception('Failed to issue warning: $e');
@@ -92,10 +92,7 @@ class StudentWarningService {
 
   Future<void> deleteWarning(String warningId) async {
     try {
-      await _supabase
-          .from('student_warnings')
-          .delete()
-          .eq('id', warningId);
+      await _supabase.from('student_warnings').delete().eq('id', warningId);
     } catch (e) {
       throw Exception('Failed to delete warning: $e');
     }

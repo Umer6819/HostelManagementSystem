@@ -7,7 +7,7 @@ class MisconductReport {
   final String severity; // minor, moderate, severe
   final String status; // pending, under_review, resolved, dismissed
   final DateTime createdAt;
-  
+
   // Admin remarks
   final String? adminRemarks;
   final String? adminId;

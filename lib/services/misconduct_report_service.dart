@@ -10,7 +10,7 @@ class MisconductReportService {
           .from('misconduct_reports')
           .select('*')
           .order('created_at', ascending: false);
-      
+
       return (response as List)
           .map((json) => MisconductReport.fromJson(json))
           .toList();
@@ -26,7 +26,7 @@ class MisconductReportService {
           .select('*')
           .eq('student_id', studentId)
           .order('created_at', ascending: false);
-      
+
       return (response as List)
           .map((json) => MisconductReport.fromJson(json))
           .toList();
@@ -42,7 +42,7 @@ class MisconductReportService {
           .select('*')
           .eq('status', status)
           .order('created_at', ascending: false);
-      
+
       return (response as List)
           .map((json) => MisconductReport.fromJson(json))
           .toList();
@@ -71,7 +71,7 @@ class MisconductReportService {
           })
           .select()
           .single();
-      
+
       return MisconductReport.fromJson(response);
     } catch (e) {
       throw Exception('Failed to create misconduct report: $e');
@@ -103,10 +103,7 @@ class MisconductReportService {
 
   Future<void> deleteReport(String reportId) async {
     try {
-      await _supabase
-          .from('misconduct_reports')
-          .delete()
-          .eq('id', reportId);
+      await _supabase.from('misconduct_reports').delete().eq('id', reportId);
     } catch (e) {
       throw Exception('Failed to delete misconduct report: $e');
     }

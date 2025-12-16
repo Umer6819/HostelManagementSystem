@@ -9,7 +9,8 @@ class DisciplineManagementScreen extends StatefulWidget {
   const DisciplineManagementScreen({Key? key}) : super(key: key);
 
   @override
-  State<DisciplineManagementScreen> createState() => _DisciplineManagementScreenState();
+  State<DisciplineManagementScreen> createState() =>
+      _DisciplineManagementScreenState();
 }
 
 class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
@@ -17,12 +18,12 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
   late TabController _tabController;
   final _warningService = StudentWarningService();
   final _reportService = MisconductReportService();
-  
+
   List<StudentWarning> _warnings = [];
   List<MisconductReport> _reports = [];
   bool _loadingWarnings = false;
   bool _loadingReports = false;
-  
+
   String _selectedReportStatus = 'pending';
 
   @override
@@ -46,9 +47,9 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
       setState(() => _warnings = warnings);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading warnings: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading warnings: $e')));
       }
     } finally {
       setState(() => _loadingWarnings = false);
@@ -58,13 +59,15 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
   Future<void> _loadReports() async {
     setState(() => _loadingReports = true);
     try {
-      final reports = await _reportService.fetchReportsByStatus(_selectedReportStatus);
+      final reports = await _reportService.fetchReportsByStatus(
+        _selectedReportStatus,
+      );
       setState(() => _reports = reports);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading reports: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading reports: $e')));
       }
     } finally {
       setState(() => _loadingReports = false);
@@ -72,8 +75,12 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
   }
 
   void _showReviewDialog(MisconductReport report) {
-    final remarksController = TextEditingController(text: report.adminRemarks ?? '');
-    final actionController = TextEditingController(text: report.actionTaken ?? '');
+    final remarksController = TextEditingController(
+      text: report.adminRemarks ?? '',
+    );
+    final actionController = TextEditingController(
+      text: report.actionTaken ?? '',
+    );
     String selectedStatus = report.status;
 
     showDialog(
@@ -89,7 +96,10 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
               _buildDetailRow('Incident Type', report.incidentType),
               _buildDetailRow('Severity', report.severity),
               const SizedBox(height: 12),
-              const Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Description',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.all(8),
@@ -100,7 +110,10 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
                 child: Text(report.description),
               ),
               const SizedBox(height: 12),
-              const Text('Status', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Status',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               StatefulBuilder(
                 builder: (context, setState) => DropdownButton<String>(
@@ -108,15 +121,28 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
                   isExpanded: true,
                   items: const [
                     DropdownMenuItem(value: 'pending', child: Text('Pending')),
-                    DropdownMenuItem(value: 'under_review', child: Text('Under Review')),
-                    DropdownMenuItem(value: 'resolved', child: Text('Resolved')),
-                    DropdownMenuItem(value: 'dismissed', child: Text('Dismissed')),
+                    DropdownMenuItem(
+                      value: 'under_review',
+                      child: Text('Under Review'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'resolved',
+                      child: Text('Resolved'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'dismissed',
+                      child: Text('Dismissed'),
+                    ),
                   ],
-                  onChanged: (value) => setState(() => selectedStatus = value ?? 'pending'),
+                  onChanged: (value) =>
+                      setState(() => selectedStatus = value ?? 'pending'),
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('Admin Remarks', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Admin Remarks',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: remarksController,
@@ -129,7 +155,10 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('Action Taken', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Action Taken',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: actionController,
@@ -150,9 +179,7 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
             onPressed: () async {
               try {
                 final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -162,22 +189,28 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
                   reportId: report.id,
                   status: selectedStatus,
                   adminId: userId,
-                  adminRemarks: remarksController.text.isNotEmpty ? remarksController.text : null,
-                  actionTaken: actionController.text.isNotEmpty ? actionController.text : null,
+                  adminRemarks: remarksController.text.isNotEmpty
+                      ? remarksController.text
+                      : null,
+                  actionTaken: actionController.text.isNotEmpty
+                      ? actionController.text
+                      : null,
                 );
 
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Report reviewed successfully')),
+                    const SnackBar(
+                      content: Text('Report reviewed successfully'),
+                    ),
                   );
                   Navigator.pop(context);
                   _loadReports();
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               }
             },
@@ -259,98 +292,117 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
     return _loadingWarnings
         ? const Center(child: CircularProgressIndicator())
         : _warnings.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.warning_outlined, size: 64, color: Colors.grey[300]),
-                    const SizedBox(height: 16),
-                    const Text('No warnings issued yet'),
-                  ],
-                ),
-              )
-            : ListView.builder(
-                padding: const EdgeInsets.all(12),
-                itemCount: _warnings.length,
-                itemBuilder: (context, index) {
-                  final warning = _warnings[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: _getSeverityColor(warning.severity),
-                        child: const Icon(Icons.warning, color: Colors.white),
-                      ),
-                      title: Text('Student: ${warning.studentId.substring(0, 8)}...'),
-                      subtitle: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.warning_outlined, size: 64, color: Colors.grey[300]),
+                const SizedBox(height: 16),
+                const Text('No warnings issued yet'),
+              ],
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: _warnings.length,
+            itemBuilder: (context, index) {
+              final warning = _warnings[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: _getSeverityColor(warning.severity),
+                    child: const Icon(Icons.warning, color: Colors.white),
+                  ),
+                  title: Text(
+                    'Student: ${warning.studentId.substring(0, 8)}...',
+                  ),
+                  subtitle: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      Text('Reason: ${warning.reason}'),
+                      const SizedBox(height: 4),
+                      Row(
                         children: [
-                          const SizedBox(height: 4),
-                          Text('Reason: ${warning.reason}'),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Chip(
-                                label: Text(
-                                  warning.severity.toUpperCase(),
-                                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                                ),
-                                backgroundColor: _getSeverityColor(warning.severity),
+                          Chip(
+                            label: Text(
+                              warning.severity.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
                               ),
-                              const SizedBox(width: 8),
-                              if (warning.isActive)
-                                const Chip(
-                                  label: Text('ACTIVE', style: TextStyle(color: Colors.white, fontSize: 12)),
-                                  backgroundColor: Colors.green,
-                                )
-                              else
-                                const Chip(
-                                  label: Text('INACTIVE', style: TextStyle(color: Colors.white, fontSize: 12)),
-                                  backgroundColor: Colors.grey,
+                            ),
+                            backgroundColor: _getSeverityColor(
+                              warning.severity,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (warning.isActive)
+                            const Chip(
+                              label: Text(
+                                'ACTIVE',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
                                 ),
-                            ],
-                          ),
+                              ),
+                              backgroundColor: Colors.green,
+                            )
+                          else
+                            const Chip(
+                              label: Text(
+                                'INACTIVE',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                              backgroundColor: Colors.grey,
+                            ),
                         ],
                       ),
-                      trailing: PopupMenuButton(
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            child: const Text('Deactivate'),
-                            onTap: () async {
-                              try {
-                                await _warningService.deactivateWarning(warning.id);
-                                _loadWarnings();
-                              } catch (e) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Error: $e')),
-                                  );
-                                }
-                              }
-                            },
-                          ),
-                          PopupMenuItem(
-                            child: const Text('Delete'),
-                            onTap: () async {
-                              try {
-                                await _warningService.deleteWarning(warning.id);
-                                _loadWarnings();
-                              } catch (e) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Error: $e')),
-                                  );
-                                }
-                              }
-                            },
-                          ),
-                        ],
+                    ],
+                  ),
+                  trailing: PopupMenuButton(
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        child: const Text('Deactivate'),
+                        onTap: () async {
+                          try {
+                            await _warningService.deactivateWarning(warning.id);
+                            _loadWarnings();
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          }
+                        },
                       ),
-                    ),
-                  );
-                },
+                      PopupMenuItem(
+                        child: const Text('Delete'),
+                        onTap: () async {
+                          try {
+                            await _warningService.deleteWarning(warning.id);
+                            _loadWarnings();
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               );
+            },
+          );
   }
 
   Widget _buildReportsTab() {
@@ -405,84 +457,102 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
           child: _loadingReports
               ? const Center(child: CircularProgressIndicator())
               : _reports.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.info_outline, size: 64, color: Colors.grey[300]),
-                          const SizedBox(height: 16),
-                          Text('No $_selectedReportStatus reports'),
-                        ],
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 64,
+                        color: Colors.grey[300],
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(12),
-                      itemCount: _reports.length,
-                      itemBuilder: (context, index) {
-                        final report = _reports[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: _getSeverityColor(report.severity),
-                              child: const Icon(Icons.report, color: Colors.white),
+                      const SizedBox(height: 16),
+                      Text('No $_selectedReportStatus reports'),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: _reports.length,
+                  itemBuilder: (context, index) {
+                    final report = _reports[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: _getSeverityColor(report.severity),
+                          child: const Icon(Icons.report, color: Colors.white),
+                        ),
+                        title: Text(
+                          '${report.incidentType} - ${report.studentId.substring(0, 8)}...',
+                        ),
+                        subtitle: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              report.description,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            title: Text('${report.incidentType} - ${report.studentId.substring(0, 8)}...'),
-                            subtitle: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            const SizedBox(height: 4),
+                            Row(
                               children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  report.description,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Chip(
-                                      label: Text(
-                                        report.severity.toUpperCase(),
-                                        style: const TextStyle(color: Colors.white, fontSize: 12),
-                                      ),
-                                      backgroundColor: _getSeverityColor(report.severity),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Chip(
-                                      label: Text(
-                                        report.status.replaceAll('_', ' ').toUpperCase(),
-                                        style: const TextStyle(color: Colors.white, fontSize: 12),
-                                      ),
-                                      backgroundColor: _getStatusColor(report.status),
-                                    ),
-                                  ],
-                                ),
-                                if (report.adminRemarks != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blue[50],
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        'Admin: ${report.adminRemarks}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
+                                Chip(
+                                  label: Text(
+                                    report.severity.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
                                     ),
                                   ),
+                                  backgroundColor: _getSeverityColor(
+                                    report.severity,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Chip(
+                                  label: Text(
+                                    report.status
+                                        .replaceAll('_', ' ')
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  backgroundColor: _getStatusColor(
+                                    report.status,
+                                  ),
+                                ),
                               ],
                             ),
-                            onTap: () => _showReviewDialog(report),
-                            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          ),
-                        );
-                      },
-                    ),
+                            if (report.adminRemarks != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue[50],
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Admin: ${report.adminRemarks}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        onTap: () => _showReviewDialog(report),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );

@@ -71,9 +71,15 @@ class _AdminScreenState extends State<AdminScreen> {
               icon: Icon(Icons.meeting_room),
               label: 'Rooms',
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Students'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.school),
+              label: 'Students',
+            ),
             BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Fees'),
-            BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Payments'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history),
+              label: 'Payments',
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.report_problem),
               label: 'Complaints',
