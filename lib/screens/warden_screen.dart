@@ -10,6 +10,7 @@ import '../models/student_model.dart';
 import '../models/room_model.dart';
 import '../models/maintenance_issue_model.dart';
 import '../models/room_lock_request_model.dart';
+import 'warden/discipline_view_screen.dart';
 
 class WardenScreen extends StatefulWidget {
   const WardenScreen({super.key});
@@ -40,7 +41,7 @@ class _WardenScreenState extends State<WardenScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadData();
   }
 
@@ -169,6 +170,7 @@ class _WardenScreenState extends State<WardenScreen>
             Tab(text: 'My Complaints'),
             Tab(text: 'Student Monitoring'),
             Tab(text: 'Room Monitoring'),
+            Tab(text: 'Discipline'),
           ],
         ),
       ),
@@ -179,6 +181,7 @@ class _WardenScreenState extends State<WardenScreen>
               children: [
                 _buildComplaintsTab(),
                 _buildStudentMonitoringTab(),
+                const DisciplineViewScreen(),
                 _buildRoomsTab(),
               ],
             ),

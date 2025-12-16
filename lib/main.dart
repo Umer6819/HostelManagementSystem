@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/admin_screen.dart';
-import 'screens/warden_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
