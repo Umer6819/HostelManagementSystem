@@ -181,8 +181,8 @@ class _WardenScreenState extends State<WardenScreen>
               children: [
                 _buildComplaintsTab(),
                 _buildStudentMonitoringTab(),
-                const DisciplineViewScreen(),
                 _buildRoomsTab(),
+                const DisciplineViewScreen(),
               ],
             ),
     );

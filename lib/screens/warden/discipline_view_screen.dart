@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/student_warning_model.dart';
 import '../../models/misconduct_report_model.dart';
 import '../../services/student_warning_service.dart';
@@ -119,6 +120,15 @@ class _DisciplineViewScreenState extends State<DisciplineViewScreen>
           ],
         ),
       ),
+      floatingActionButton: _selectedStudentId.isNotEmpty
+          ? FloatingActionButton(
+              onPressed: _tabController.index == 0
+                  ? _showIssueWarningDialog
+                  : _showCreateReportDialog,
+              backgroundColor: Colors.indigo,
+              child: Icon(_tabController.index == 0 ? Icons.warning : Icons.report),
+            )
+          : null,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _studentWarnings.isEmpty && _studentReports.isEmpty
@@ -171,6 +181,218 @@ class _DisciplineViewScreenState extends State<DisciplineViewScreen>
                   ],
                 ),
     );
+  }
+
+  void _showIssueWarningDialog() {
+    final reasonController = TextEditingController();
+    String selectedSeverity = 'minor';
+    DateTime? expiryDate;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Issue Warning'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Student: $_selectedStudentId', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              const Text('Reason', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: reasonController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                  hintText: 'Enter reason for warning...',
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Severity', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              StatefulBuilder(
+                builder: (context, setState) => DropdownButton<String>(
+                  value: selectedSeverity,
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: 'minor', child: Text('Minor')),
+                    DropdownMenuItem(value: 'moderate', child: Text('Moderate')),
+                    DropdownMenuItem(value: 'severe', child: Text('Severe')),
+                  ],
+                  onChanged: (value) => setState(() => selectedSeverity = value ?? 'minor'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Expiry Date (Optional)', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now().add(const Duration(days: 30)),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    (context as Element).markNeedsBuild();
+                    expiryDate = picked;
+                  }
+                },
+                child: Text(
+                  expiryDate != null
+                      ? expiryDate.toString().split(' ')[0]
+                      : 'Select Date',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              try {
+                final wardenId = await _getWardenId();
+                if (wardenId == null) throw Exception('Warden not authenticated');
+
+                await _warningService.issueWarning(
+                  studentId: _selectedStudentId,
+                  issuedBy: wardenId,
+                  reason: reasonController.text,
+                  severity: selectedSeverity,
+                  expiresAt: expiryDate,
+                );
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Warning issued successfully')),
+                  );
+                  Navigator.pop(context);
+                  _loadData();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Issue Warning'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCreateReportDialog() {
+    final incidentTypeController = TextEditingController();
+    final descriptionController = TextEditingController();
+    String selectedSeverity = 'moderate';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create Misconduct Report'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Student: $_selectedStudentId', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              const Text('Incident Type', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: incidentTypeController,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                  hintText: 'E.g., Unauthorized absence, Noise complaint...',
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: descriptionController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+                  hintText: 'Provide detailed description of the incident...',
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text('Severity', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              StatefulBuilder(
+                builder: (context, setState) => DropdownButton<String>(
+                  value: selectedSeverity,
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: 'minor', child: Text('Minor')),
+                    DropdownMenuItem(value: 'moderate', child: Text('Moderate')),
+                    DropdownMenuItem(value: 'severe', child: Text('Severe')),
+                  ],
+                  onChanged: (value) => setState(() => selectedSeverity = value ?? 'moderate'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              try {
+                final wardenId = await _getWardenId();
+                if (wardenId == null) throw Exception('Warden not authenticated');
+
+                await _reportService.createReport(
+                  studentId: _selectedStudentId,
+                  reportedBy: wardenId,
+                  incidentType: incidentTypeController.text,
+                  description: descriptionController.text,
+                  severity: selectedSeverity,
+                );
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Report created successfully')),
+                  );
+                  Navigator.pop(context);
+                  _loadData();
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Create Report'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> _getWardenId() async {
+    try {
+      return Supabase.instance.client.auth.currentUser?.id;
+    } catch (e) {
+      return null;
+    }
   }
 
   Widget _buildWarningsView() {
