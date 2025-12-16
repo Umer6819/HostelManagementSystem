@@ -21,21 +21,41 @@ class Notice {
     this.expiresAt,
   });
 
+  static int _toInt(dynamic v, [int fallback = 0]) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v) ?? fallback;
+    return fallback;
+  }
+
+  static bool _toBool(dynamic v, [bool fallback = false]) {
+    if (v is bool) return v;
+    if (v is int) return v != 0;
+    if (v is String) {
+      final s = v.toLowerCase();
+      return s == 'true' || s == '1' || s == 't';
+    }
+    return fallback;
+  }
+
+  static DateTime? _toDate(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is String) return DateTime.tryParse(v);
+    return null;
+  }
+
   factory Notice.fromJson(Map<String, dynamic> json) {
     return Notice(
-      id: json['id'] as int,
-      title: json['title'] as String? ?? '',
-      content: json['content'] as String? ?? '',
-      isActive: json['is_active'] as bool? ?? true,
-      priority: json['priority'] as int? ?? 0,
+      id: _toInt(json['id']),
+      title: (json['title'] as String?) ?? '',
+      content: (json['content'] as String?) ?? '',
+      isActive: _toBool(json['is_active'], true),
+      priority: _toInt(json['priority'], 0),
       createdBy: json['created_by'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'] as String)
-          : null,
-      expiresAt: json['expires_at'] != null
-          ? DateTime.tryParse(json['expires_at'] as String)
-          : null,
+      createdAt: _toDate(json['created_at']) ?? DateTime.now(),
+      updatedAt: _toDate(json['updated_at']),
+      expiresAt: _toDate(json['expires_at']),
     );
   }
 

@@ -169,8 +169,11 @@ class _DisciplineViewScreenState extends State<DisciplineViewScreen>
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.info_outline,
-                              size: 64, color: Colors.grey[300]),
+                          Icon(
+                            Icons.info_outline,
+                            size: 64,
+                            color: Colors.grey[300],
+                          ),
                           const SizedBox(height: 16),
                           const Text('Select a student to view or add records'),
                         ],

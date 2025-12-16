@@ -53,47 +53,38 @@ class _AdminScreenState extends State<AdminScreen> {
               child: const Icon(Icons.add),
             )
           : null,
-      bottomNavigationBar: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          currentIndex: _selectedIndex,
-          onTap: (index) {
-            setState(() => _selectedIndex = index);
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
-              label: 'Reports',
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Users'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.meeting_room),
-              label: 'Rooms',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.school),
-              label: 'Students',
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Fees'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.history),
-              label: 'Payments',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.report_problem),
-              label: 'Complaints',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.warning),
-              label: 'Discipline',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Settings',
-            ),
-          ],
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() => _selectedIndex = index);
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Reports',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Users'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.meeting_room),
+            label: 'Rooms',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Students'),
+          BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Fees'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Payments'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.report_problem),
+            label: 'Complaints',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.warning),
+            label: 'Discipline',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
       ),
     );
   }
