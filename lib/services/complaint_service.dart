@@ -42,4 +42,38 @@ class ComplaintService {
 
     await supabase.from('complaints').update(updateData).eq('id', complaintId);
   }
+
+  // Student-specific operations
+  Future<List<Complaint>> fetchComplaintsByStudent(String studentId) async {
+    final response = await supabase
+        .from('complaints')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('created_at', ascending: false);
+    return (response as List)
+        .map((c) => Complaint.fromJson(c as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Complaint> submitComplaint({required String title, required String description}) async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) throw Exception('User not authenticated');
+
+    final response = await supabase
+        .from('complaints')
+        .insert({
+          'student_id': uid,
+          'title': title,
+          'description': description,
+          'status': 'pending',
+        })
+        .select()
+        .single();
+
+    return Complaint.fromJson(response as Map<String, dynamic>);
+  }
+
+  Future<void> closeComplaint(int complaintId) async {
+    await updateStatus(complaintId, 'resolved');
+  }
 }

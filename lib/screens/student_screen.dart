@@ -3,6 +3,7 @@ import '../models/notice_model.dart';
 import '../services/notice_service.dart';
 import 'student/student_profile_screen.dart';
 import 'student/student_fees_screen.dart';
+import 'student/student_complaints_screen.dart';
 
 class StudentScreen extends StatefulWidget {
   const StudentScreen({super.key});
@@ -21,7 +22,7 @@ class _StudentScreenState extends State<StudentScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadNotices();
   }
 
@@ -56,7 +57,8 @@ class _StudentScreenState extends State<StudentScreen>
           tabs: const [
             Tab(text: 'Announcements'),
             Tab(text: 'My Profile'),
-                      Tab(text: 'Fees & Payments'),
+            Tab(text: 'Fees & Payments'),
+            Tab(text: 'Complaints'),
           ],
         ),
         actions: [
@@ -75,7 +77,8 @@ class _StudentScreenState extends State<StudentScreen>
               children: [
                 _buildAnnouncementsTab(),
                 const StudentProfileScreen(),
-                              const StudentFeesScreen(),
+                const StudentFeesScreen(),
+                const StudentComplaintsScreen(),
               ],
             ),
     );
