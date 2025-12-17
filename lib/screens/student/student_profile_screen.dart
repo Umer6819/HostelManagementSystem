@@ -51,9 +51,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load profile: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load profile: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -65,36 +65,33 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       appBar: AppBar(
         title: const Text('My Profile'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadProfile,
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadProfile),
         ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _student == null
-              ? const Center(child: Text('Profile not found'))
-              : RefreshIndicator(
-                  onRefresh: _loadProfile,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildProfileHeader(),
-                        const SizedBox(height: 24),
-                        _buildPersonalDetailsSection(),
-                        const SizedBox(height: 24),
-                        _buildRoomAssignmentSection(),
-                        const SizedBox(height: 24),
-                        _buildContactInfoSection(),
-                        const SizedBox(height: 24),
-                        _buildSecuritySection(),
-                      ],
-                    ),
-                  ),
+          ? const Center(child: Text('Profile not found'))
+          : RefreshIndicator(
+              onRefresh: _loadProfile,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildProfileHeader(),
+                    const SizedBox(height: 24),
+                    _buildPersonalDetailsSection(),
+                    const SizedBox(height: 24),
+                    _buildRoomAssignmentSection(),
+                    const SizedBox(height: 24),
+                    _buildContactInfoSection(),
+                    const SizedBox(height: 24),
+                    _buildSecuritySection(),
+                  ],
                 ),
+              ),
+            ),
     );
   }
 
@@ -132,10 +129,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                   const SizedBox(height: 4),
                   Text(
                     _student!.regNo,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -159,10 +153,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 SizedBox(width: 8),
                 Text(
                   'Personal Details',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -182,8 +173,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     final roomInfo = _student!.roomId == null
         ? 'Not assigned'
         : _room != null
-            ? 'Room ${_room!.roomNumber} (Standard)'
-            : 'Room ${_student!.roomId} (Loading...)';
+        ? 'Room ${_room!.roomNumber} (Standard)'
+        : 'Room ${_student!.roomId} (Loading...)';
 
     return Card(
       child: Padding(
@@ -197,10 +188,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 SizedBox(width: 8),
                 Text(
                   'Room Assignment',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -210,7 +198,10 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
               const SizedBox(height: 12),
               _buildDetailRow('Room Type', 'Standard'),
               const SizedBox(height: 12),
-              _buildDetailRow('Occupancy', '${_room!.occupied}/${_room!.capacity}'),
+              _buildDetailRow(
+                'Occupancy',
+                '${_room!.occupied}/${_room!.capacity}',
+              ),
               const SizedBox(height: 12),
               _buildDetailRow(
                 'Status',
@@ -277,10 +268,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 SizedBox(width: 8),
                 Text(
                   'Security',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -298,21 +286,11 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     );
   }
 
-  Widget _buildDetailRow(
-    String label,
-    String value, {
-    Color? color,
-  }) {
+  Widget _buildDetailRow(String label, String value, {Color? color}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
         Flexible(
           child: Text(
             value,
@@ -372,9 +350,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 }
               } catch (e) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Error: $e')));
               }
             },
             child: const Text('Save'),
@@ -431,8 +409,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                       icon: Icon(
                         obscureNew ? Icons.visibility_off : Icons.visibility,
                       ),
-                      onPressed: () =>
-                          setState(() => obscureNew = !obscureNew),
+                      onPressed: () => setState(() => obscureNew = !obscureNew),
                     ),
                     helperText:
                         'At least 8 characters, uppercase, lowercase, number, special char',
@@ -484,13 +461,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 final newPass = newPasswordController.text.trim();
                 final confirm = confirmPasswordController.text.trim();
 
-                if (current.isEmpty ||
-                    newPass.isEmpty ||
-                    confirm.isEmpty) {
+                if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('All fields are required'),
-                    ),
+                    const SnackBar(content: Text('All fields are required')),
                   );
                   return;
                 }
@@ -498,8 +471,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 if (newPass != confirm) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content:
-                          Text('New password and confirm password do not match'),
+                      content: Text(
+                        'New password and confirm password do not match',
+                      ),
                     ),
                   );
                   return;
@@ -517,8 +491,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 }
 
                 try {
-                  await Supabase.instance.client.auth
-                      .updateUser(UserAttributes(password: newPass));
+                  await Supabase.instance.client.auth.updateUser(
+                    UserAttributes(password: newPass),
+                  );
 
                   if (!mounted) return;
                   Navigator.pop(context);
@@ -529,9 +504,9 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                   );
                 } catch (e) {
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               },
               child: const Text('Change Password'),
