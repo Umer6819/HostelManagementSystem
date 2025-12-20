@@ -18,9 +18,22 @@ class AdminScreen extends StatefulWidget {
   State<AdminScreen> createState() => _AdminScreenState();
 }
 
-class _AdminScreenState extends State<AdminScreen> {
-  int _selectedIndex = 0;
+class _AdminScreenState extends State<AdminScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
   final GlobalKey<State> _userListKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 9, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +64,24 @@ class _AdminScreenState extends State<AdminScreen> {
             },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: const [
+            Tab(text: 'Reports', icon: Icon(Icons.dashboard)),
+            Tab(text: 'Users', icon: Icon(Icons.people)),
+            Tab(text: 'Rooms', icon: Icon(Icons.meeting_room)),
+            Tab(text: 'Students', icon: Icon(Icons.school)),
+            Tab(text: 'Fees', icon: Icon(Icons.payment)),
+            Tab(text: 'Payments', icon: Icon(Icons.history)),
+            Tab(text: 'Complaints', icon: Icon(Icons.report_problem)),
+            Tab(text: 'Discipline', icon: Icon(Icons.warning)),
+            Tab(text: 'Settings', icon: Icon(Icons.settings)),
+          ],
+        ),
       ),
-      body: views[_selectedIndex],
-      floatingActionButton: _selectedIndex == 1
+      body: TabBarView(controller: _tabController, children: views),
+      floatingActionButton: _tabController.index == 1
           ? FloatingActionButton(
               onPressed: () async {
                 await Navigator.push(
@@ -68,39 +96,6 @@ class _AdminScreenState extends State<AdminScreen> {
               child: const Icon(Icons.add),
             )
           : null,
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() => _selectedIndex = index);
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Reports',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Users'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.meeting_room),
-            label: 'Rooms',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Students'),
-          BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Fees'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Payments'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.report_problem),
-            label: 'Complaints',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.warning),
-            label: 'Discipline',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-      ),
     );
   }
 }

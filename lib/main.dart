@@ -4,14 +4,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/login_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/admin_screen.dart';
+import 'screens/student_screen.dart';
+import 'screens/warden_screen.dart';
+
+const String _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+const String _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    url: 'https://ikzrraqfxcghfqqnrybt.supabase.co',
-    anonKey: 'sb_publishable_fJV72QZW0Lb04SyWf9R9Jw_qmJO0-KE',
-  );
+  await Supabase.initialize(url: _supabaseUrl, anonKey: _supabaseAnonKey);
 
   runApp(const MainApp());
 }
@@ -24,7 +26,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp(
       title: 'Hostel Management System',
       theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      home: const LoginScreen(),
+      home: const AuthWrapper(),
       routes: {
         '/login': (context) => const LoginScreen(),
         '/reset-password': (context) => const ResetPasswordScreen(),
@@ -53,14 +55,29 @@ class _AuthWrapperState extends State<AuthWrapper> {
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final event = data.event;
       if (event == AuthChangeEvent.passwordRecovery) {
-        Navigator.of(context).pushReplacementNamed('/reset-password');
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/reset-password');
+        }
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Temporarily bypass login
-    return const AdminScreen();
+    return StreamBuilder<AuthState>(
+      stream: Supabase.instance.client.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        final session =
+            snapshot.data?.session ??
+            Supabase.instance.client.auth.currentSession;
+
+        if (session == null) {
+          return const LoginScreen();
+        }
+
+        // User is logged in, show login screen which will handle role-based navigation
+        return const LoginScreen();
+      },
+    );
   }
 }
