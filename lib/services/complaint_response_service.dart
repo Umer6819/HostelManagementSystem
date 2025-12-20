@@ -5,7 +5,9 @@ import '../models/complaint_response_model.dart';
 class ComplaintResponseService {
   final supabase = Supabase.instance.client;
 
-  Future<List<ComplaintResponse>> fetchResponsesForComplaint(int complaintId) async {
+  Future<List<ComplaintResponse>> fetchResponsesForComplaint(
+    int complaintId,
+  ) async {
     final response = await supabase
         .from('complaint_responses')
         .select('*')

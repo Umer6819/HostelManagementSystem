@@ -164,7 +164,8 @@ class _StudentScreenState extends State<StudentScreen>
   Widget _buildWarningCard(StudentWarning warning) {
     final severityColor = _getSeverityColor(warning.severity);
     final severityIcon = _getSeverityIcon(warning.severity);
-    final isExpired = warning.expiresAt != null &&
+    final isExpired =
+        warning.expiresAt != null &&
         warning.expiresAt!.isBefore(DateTime.now());
 
     return Card(
@@ -177,10 +178,7 @@ class _StudentScreenState extends State<StudentScreen>
         ),
         title: Text(
           '⚠ Warning: ${warning.reason}',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: severityColor,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: severityColor),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +186,10 @@ class _StudentScreenState extends State<StudentScreen>
             const SizedBox(height: 4),
             Text(
               'Severity: ${warning.severity.toUpperCase()}',
-              style: TextStyle(color: severityColor, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: severityColor,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 4),
             Text(

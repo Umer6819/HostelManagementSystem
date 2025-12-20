@@ -55,7 +55,10 @@ class ComplaintService {
         .toList();
   }
 
-  Future<Complaint> submitComplaint({required String title, required String description}) async {
+  Future<Complaint> submitComplaint({
+    required String title,
+    required String description,
+  }) async {
     final uid = supabase.auth.currentUser?.id;
     if (uid == null) throw Exception('User not authenticated');
 

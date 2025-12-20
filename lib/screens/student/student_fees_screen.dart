@@ -64,9 +64,7 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_error != null) {
@@ -91,7 +89,10 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
       appBar: AppBar(
         title: const Text('Fees & Payments'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadFeesAndPayments),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadFeesAndPayments,
+          ),
         ],
       ),
       body: RefreshIndicator(
@@ -161,13 +162,18 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
             const SizedBox(height: 16),
             _buildDetailRow('Month', currentFee.month),
             const SizedBox(height: 12),
-            _buildDetailRow('Amount', 'Rs. ${currentFee.amount.toStringAsFixed(2)}'),
+            _buildDetailRow(
+              'Amount',
+              'Rs. ${currentFee.amount.toStringAsFixed(2)}',
+            ),
             const SizedBox(height: 12),
             if (currentPayment != null)
               _buildDetailRow(
                 'Status',
                 currentPayment.status ? 'Paid' : 'Pending',
-                statusColor: currentPayment.status ? Colors.green : Colors.orange,
+                statusColor: currentPayment.status
+                    ? Colors.green
+                    : Colors.orange,
               ),
           ],
         ),
@@ -290,8 +296,7 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
   Widget _buildPaymentHistoryCard(Payment payment) {
     final statusColor = payment.status ? Colors.green : Colors.orange;
     final statusLabel = payment.status ? 'Paid' : 'Pending';
-    final statusIcon =
-        payment.status ? Icons.check_circle : Icons.pending;
+    final statusIcon = payment.status ? Icons.check_circle : Icons.pending;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -347,10 +352,7 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
                     if (payment.status && payment.paidAt != null)
                       Text(
                         'Paid: ${_formatDate(payment.paidAt!)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                   ],
                 ),
@@ -371,10 +373,7 @@ class _StudentFeesScreenState extends State<StudentFeesScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-        ),
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
         Text(
           value,
           style: TextStyle(

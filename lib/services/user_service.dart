@@ -37,35 +37,56 @@ class UserService {
         .toList();
   }
 
-  // Create new user (via Supabase Admin API)
+  // Create new user without auto-logging in
+  // Note: Confirmation email will still be sent by Supabase unless disabled in project settings
   Future<models.User> createUser(
     String email,
     String password,
     String role,
   ) async {
-    // Sign up the user
-    final response = await supabase.auth.signUp(
-      email: email,
-      password: password,
-    );
+    // Get current user session before signup
+    final currentSession = Supabase.instance.client.auth.currentSession;
+    final currentUser = Supabase.instance.client.auth.currentUser;
 
-    if (response.user == null) {
-      throw Exception('Failed to create user');
+    try {
+      // Sign up the new user
+      final response = await supabase.auth.signUp(
+        email: email,
+        password: password,
+      );
+
+      if (response.user == null) {
+        throw Exception('Failed to create user');
+      }
+
+      final userId = response.user!.id;
+      
+      // Insert profile
+      await supabase.from('profiles').insert({
+        'id': userId,
+        'email': email,
+        'role': role,
+      });
+
+      // Restore admin's session if it was switched
+      if (currentUser != null && currentSession != null) {
+        // Re-establish the admin session using access token
+        await supabase.auth.recoverSession(currentSession.accessToken);
+      }
+
+      return models.User(
+        id: userId,
+        email: email,
+        role: role,
+        createdAt: DateTime.now(),
+      );
+    } catch (e) {
+      // Restore admin session on error
+      if (currentUser != null && currentSession != null) {
+        await supabase.auth.recoverSession(currentSession.accessToken);
+      }
+      rethrow;
     }
-
-    final userId = response.user!.id;
-    await supabase.from('profiles').insert({
-      'id': userId,
-      'email': email,
-      'role': role,
-    });
-
-    return models.User(
-      id: userId,
-      email: email,
-      role: role,
-      createdAt: DateTime.now(),
-    );
   }
 
   // Update user role

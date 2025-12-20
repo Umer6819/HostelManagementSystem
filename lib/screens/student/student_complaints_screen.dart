@@ -9,7 +9,8 @@ class StudentComplaintsScreen extends StatefulWidget {
   const StudentComplaintsScreen({super.key});
 
   @override
-  State<StudentComplaintsScreen> createState() => _StudentComplaintsScreenState();
+  State<StudentComplaintsScreen> createState() =>
+      _StudentComplaintsScreenState();
 }
 
 class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
@@ -63,7 +64,10 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
       appBar: AppBar(
         title: const Text('Complaints & Requests'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadComplaints),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadComplaints,
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -74,31 +78,31 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(_error!),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: _loadComplaints,
-                        child: const Text('Retry'),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(_error!),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: _loadComplaints,
+                    child: const Text('Retry'),
                   ),
-                )
-              : _complaints.isEmpty
-                  ? const Center(child: Text('No complaints yet'))
-                  : RefreshIndicator(
-                      onRefresh: _loadComplaints,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _complaints.length,
-                        itemBuilder: (context, index) {
-                          return _buildComplaintCard(_complaints[index]);
-                        },
-                      ),
-                    ),
+                ],
+              ),
+            )
+          : _complaints.isEmpty
+          ? const Center(child: Text('No complaints yet'))
+          : RefreshIndicator(
+              onRefresh: _loadComplaints,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _complaints.length,
+                itemBuilder: (context, index) {
+                  return _buildComplaintCard(_complaints[index]);
+                },
+              ),
+            ),
     );
   }
 
@@ -122,7 +126,10 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                     children: [
                       Text(
                         complaint.title,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -134,15 +141,23 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.4)),
+                    border: Border.all(
+                      color: statusColor.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Text(
                     statusLabel,
-                    style: TextStyle(color: statusColor, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -184,7 +199,7 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                     label: const Text('Close'),
                   ),
               ],
-            )
+            ),
           ],
         ),
       ),
@@ -232,7 +247,10 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                 return;
               }
               try {
-                await _complaintService.submitComplaint(title: title, description: desc);
+                await _complaintService.submitComplaint(
+                  title: title,
+                  description: desc,
+                );
                 if (!mounted) return;
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -241,9 +259,9 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                 _loadComplaints();
               } catch (e) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Error: $e')));
               }
             },
             child: const Text('Submit'),
@@ -255,7 +273,9 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
 
   Future<void> _showResponses(Complaint complaint) async {
     try {
-      final responses = await _responseService.fetchResponsesForComplaint(complaint.id);
+      final responses = await _responseService.fetchResponsesForComplaint(
+        complaint.id,
+      );
       if (!mounted) return;
 
       await showModalBottomSheet(
@@ -286,7 +306,8 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: responses.length,
-                  itemBuilder: (context, index) => _buildResponseTile(responses[index]),
+                  itemBuilder: (context, index) =>
+                      _buildResponseTile(responses[index]),
                 ),
             ],
           ),
@@ -294,9 +315,9 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load responses: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load responses: $e')));
     }
   }
 
@@ -314,10 +335,18 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Close Complaint?'),
-        content: const Text('Are you sure you want to mark this complaint as resolved?'),
+        content: const Text(
+          'Are you sure you want to mark this complaint as resolved?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Close')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Close'),
+          ),
         ],
       ),
     );
@@ -326,15 +355,15 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
     try {
       await _complaintService.closeComplaint(c.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Complaint closed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Complaint closed')));
       _loadComplaints();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 
