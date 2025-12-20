@@ -77,9 +77,19 @@ class _StudentScreenState extends State<StudentScreen>
           if (_tabController.index == 0)
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: _loadNotices,
               tooltip: 'Refresh',
+              onPressed: _loadNotices,
             ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () async {
+              await Supabase.instance.client.auth.signOut();
+              if (mounted) {
+                Navigator.of(context).pushReplacementNamed('/login');
+              }
+            },
+          ),
         ],
       ),
       body: _loading && _tabController.index == 0

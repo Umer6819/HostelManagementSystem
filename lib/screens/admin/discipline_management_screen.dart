@@ -266,7 +266,7 @@ class _DisciplineManagementScreenState extends State<DisciplineManagementScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Discipline Management'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,

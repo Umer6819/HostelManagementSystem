@@ -116,7 +116,7 @@ class _DisciplineViewScreenState extends State<DisciplineViewScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Student Discipline History'),
-        backgroundColor: Colors.indigo,
+        backgroundColor: Colors.white,
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'admin/reports_screen.dart';
 import 'admin/user_list_view.dart';
 import 'admin/user_form_screen.dart';
@@ -36,7 +37,21 @@ class _AdminScreenState extends State<AdminScreen> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin Dashboard')),
+      appBar: AppBar(
+        title: const Text('Admin Dashboard'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () async {
+              await Supabase.instance.client.auth.signOut();
+              if (mounted) {
+                Navigator.of(context).pushReplacementNamed('/login');
+              }
+            },
+          ),
+        ],
+      ),
       body: views[_selectedIndex],
       floatingActionButton: _selectedIndex == 1
           ? FloatingActionButton(

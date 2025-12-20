@@ -37,56 +37,39 @@ class UserService {
         .toList();
   }
 
-  // Create new user without auto-logging in
-  // Note: Confirmation email will still be sent by Supabase unless disabled in project settings
+  // Create new user without sending confirmation email
+  // Requires service-role key configured for this client.
   Future<models.User> createUser(
     String email,
     String password,
     String role,
   ) async {
-    // Get current user session before signup
-    final currentSession = Supabase.instance.client.auth.currentSession;
-    final currentUser = Supabase.instance.client.auth.currentUser;
-
-    try {
-      // Sign up the new user
-      final response = await supabase.auth.signUp(
+    final adminUser = await supabase.auth.admin.createUser(
+      AdminUserAttributes(
         email: email,
         password: password,
-      );
+        emailConfirm: true, // auto-confirm email, no confirmation email
+        userMetadata: {'role': role},
+      ),
+    );
 
-      if (response.user == null) {
-        throw Exception('Failed to create user');
-      }
-
-      final userId = response.user!.id;
-      
-      // Insert profile
-      await supabase.from('profiles').insert({
-        'id': userId,
-        'email': email,
-        'role': role,
-      });
-
-      // Restore admin's session if it was switched
-      if (currentUser != null && currentSession != null) {
-        // Re-establish the admin session using access token
-        await supabase.auth.recoverSession(currentSession.accessToken);
-      }
-
-      return models.User(
-        id: userId,
-        email: email,
-        role: role,
-        createdAt: DateTime.now(),
-      );
-    } catch (e) {
-      // Restore admin session on error
-      if (currentUser != null && currentSession != null) {
-        await supabase.auth.recoverSession(currentSession.accessToken);
-      }
-      rethrow;
+    final userId = adminUser.user?.id;
+    if (userId == null) {
+      throw Exception('Failed to create user');
     }
+
+    await supabase.from('profiles').insert({
+      'id': userId,
+      'email': email,
+      'role': role,
+    });
+
+    return models.User(
+      id: userId,
+      email: email,
+      role: role,
+      createdAt: DateTime.now(),
+    );
   }
 
   // Update user role
