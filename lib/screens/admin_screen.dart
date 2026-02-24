@@ -27,6 +27,10 @@ class _AdminScreenState extends State<AdminScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 9, vsync: this);
+    // Rebuild when tab changes so FAB visibility updates correctly
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override

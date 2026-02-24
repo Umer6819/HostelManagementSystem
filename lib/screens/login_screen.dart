@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -34,10 +37,14 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      final response = await Supabase.instance.client.auth
+          .signInWithPassword(email: email, password: password)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw TimeoutException('Login request timed out');
+            },
+          );
 
       final user = response.user;
       if (user == null) {
@@ -54,8 +61,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
       _navigateByRole(role);
+    } on TimeoutException catch (e) {
+      // Request timeout (common on slow mobile networks)
+      if (!mounted) return;
+      debugPrint('TimeoutException during login: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connection timeout. Please try again.'),
+          duration: Duration(seconds: 4),
+        ),
+      );
     } on PostgrestException catch (e) {
       if (!mounted) return;
+      debugPrint('PostgrestException during login: ${e.message}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -67,18 +85,58 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } on AuthException catch (e) {
       if (!mounted) return;
+      debugPrint('AuthException during login: ${e.message}');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.message)));
-    } catch (e) {
+    } on FormatException catch (e) {
+      // JSON parsing errors (can happen with malformed responses)
       if (!mounted) return;
+      debugPrint('FormatException during login: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Unexpected error occurred. Please try again.'),
+          content: Text('Invalid server response. Please try again later.'),
+          duration: Duration(seconds: 5),
         ),
       );
-      // Optional: log the error for debugging
-      // debugPrint('Login error: $e');
+    } catch (e, stackTrace) {
+      if (!mounted) return;
+      // Log the actual error with stack trace for debugging
+      debugPrint('=== LOGIN ERROR ===');
+      debugPrint('Error type: ${e.runtimeType}');
+      debugPrint('Error message: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('==================');
+
+      // Check for network-related errors by string matching
+      String errorString = e.toString().toLowerCase();
+      String userMessage;
+
+      if (errorString.contains('socket') ||
+          errorString.contains('network') ||
+          errorString.contains('connection refused') ||
+          errorString.contains('failed host lookup')) {
+        userMessage = 'Network error. Please check your internet connection.';
+      } else if (errorString.contains('timeout')) {
+        userMessage = 'Connection timeout. Please try again.';
+      } else {
+        userMessage = kDebugMode
+            ? 'Error (${e.runtimeType}): ${e.toString()}'
+            : 'Login failed. Please try again or contact support.';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(userMessage),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: 'Copy Error',
+            onPressed: () {
+              debugPrint('User requested error details: $e');
+            },
+          ),
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -97,21 +155,48 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(email);
+      await Supabase.instance.client.auth
+          .resetPasswordForEmail(email)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw TimeoutException('Password reset request timed out');
+            },
+          );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Reset link sent to your email')),
       );
+    } on TimeoutException catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request timed out. Please try again.')),
+      );
     } on AuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to send reset email')),
-      );
+      debugPrint('Password reset error: $e');
+
+      // Check for network-related errors
+      String errorString = e.toString().toLowerCase();
+      String userMessage;
+
+      if (errorString.contains('socket') ||
+          errorString.contains('network') ||
+          errorString.contains('connection refused')) {
+        userMessage = 'No internet connection. Please check your network.';
+      } else {
+        userMessage =
+            'Failed to send reset email. ${kDebugMode ? e.toString() : "Please try again."}';
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(userMessage)));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -122,7 +207,13 @@ class _LoginScreenState extends State<LoginScreen> {
         .from('profiles')
         .select('role')
         .eq('id', userId)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(
+          const Duration(seconds: 15),
+          onTimeout: () {
+            throw TimeoutException('Failed to fetch user role');
+          },
+        );
 
     if (response == null) return null;
     return (response['role'] as String?)?.toLowerCase();
@@ -301,7 +392,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton(
-                              onPressed: _isLoading ? null : _handleForgotPassword,
+                              onPressed: _isLoading
+                                  ? null
+                                  : _handleForgotPassword,
                               child: const Text(
                                 'Forgot Password?',
                                 style: TextStyle(color: Colors.blue),

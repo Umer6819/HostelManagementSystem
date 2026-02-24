@@ -1,0 +1,32 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub/
+build/
+
+# IDE and system
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Flutter generated
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/
+
+# Local machine / secrets
+.env
+.env.*
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+
+# Android/iOS local config
+android/local.properties
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/

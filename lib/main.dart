@@ -7,15 +7,25 @@ import 'screens/admin_screen.dart';
 import 'screens/student_screen.dart';
 import 'screens/warden_screen.dart';
 
-const String _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-const String _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(url: _supabaseUrl, anonKey: _supabaseAnonKey);
+  if (_supabaseUrl.isEmpty || _supabaseAnonKey.isEmpty) {
+    throw Exception(
+      'Missing Supabase config. Provide SUPABASE_URL and SUPABASE_ANON_KEY via --dart-define.',
+    );
+  }
 
-  runApp(const MainApp());
+  await Supabase.initialize(
+    url: _supabaseUrl,
+    anonKey: _supabaseAnonKey,
+  );
+  runApp(MainApp());
 }
 
 class MainApp extends StatelessWidget {
